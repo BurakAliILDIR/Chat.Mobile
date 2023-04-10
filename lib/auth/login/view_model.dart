@@ -1,4 +1,4 @@
-class LoginViewModel{
-  var usernameOrEmail;
-  var password;
+class LoginViewModel {
+  var UsernameOrEmail;
+  var Password;
 }

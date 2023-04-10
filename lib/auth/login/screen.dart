@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:projects/auth/login/service.dart';
 import 'package:projects/auth/login/view_model.dart';
+import 'package:projects/const/common.dart';
+import 'package:projects/users/screen.dart';
 
 import '../../const/consts.dart';
 
@@ -66,11 +68,21 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () async {
                   var loginViewModel = LoginViewModel();
 
-                  loginViewModel.usernameOrEmail =
+                  loginViewModel.UsernameOrEmail =
                       UsernameOrMailController.text;
-                  loginViewModel.password = passwordController.text;
+                  loginViewModel.Password = passwordController.text;
 
-                  LoginService.Login(loginViewModel);
+                  final status = await LoginService.Login(loginViewModel);
+                  switch (status) {
+                    case ResponseStatus.Success:
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const UsersPage()));
+                      break;
+                    case ResponseStatus.Warning:
+                      break;
+                    case ResponseStatus.Error:
+                      break;
+                  }
                 },
               ),
             ),
