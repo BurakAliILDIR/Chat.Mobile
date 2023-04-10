@@ -1,11 +1,13 @@
+import 'dart:convert';
+
 import 'package:projects/helper/auth_helper.dart';
+import 'package:projects/users/response.dart';
 
 import '../const/consts.dart';
 import '../helper/helper.dart';
-import 'model.dart';
 
 class UsersService {
-  static Future<List<User>> GetUsers() async {
+  static Future<GetAllUserResponse> GetUsers() async {
     final dio = await Helper.GetDio();
 
     final response = await dio.get(Endpoints.Users);
@@ -14,6 +16,7 @@ class UsersService {
 
     AuthHelper.JwtSolve();
 
+    data = GetAllUserResponse.fromJson(data);
     return data;
   }
 }

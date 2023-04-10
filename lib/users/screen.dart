@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:projects/users/response.dart';
 import 'package:projects/users/service.dart';
+
+import '../chat/screen.dart';
 
 class UsersPage extends StatefulWidget {
   const UsersPage({Key? key}) : super(key: key);
@@ -9,11 +12,8 @@ class UsersPage extends StatefulWidget {
 }
 
 class _UsersPageState extends State<UsersPage> {
-  var response;
-
   @override
-  Future<void> initState() async {
-    response = await UsersService.GetUsers();
+  void initState() {
     super.initState();
   }
 
@@ -23,13 +23,40 @@ class _UsersPageState extends State<UsersPage> {
       appBar: AppBar(
         title: Text("Kullanıcılar"),
       ),
-      body: ListView.builder(
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text("Data"),
+      body: FutureBuilder<GetAllUserResponse>(
+        future: UsersService.GetUsers(),
+        builder: (context, snapshot) {
+          print(snapshot.data);
+          if (snapshot.hasData) {
+            List<Widget> widgets = [];
+            for (Data data in (snapshot.data?.data as List<Data>)) {
+              widgets.add(ListTile(
+                title: Text(data.userName.toString()),
+                subtitle: Text(data.email.toString()),
+                onTap: () => {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatPage(
+                        userName: data.userName.toString(),
+                        email: data.email.toString(),
+                        phoneNumber: data.phoneNumber.toString(),
+                      ),
+                    ),
+                  )
+                },
+              ));
+            }
+            return ListView(
+              children: widgets,
+            );
+          }
+          return const Center(
+            child: CircularProgressIndicator(
+              semanticsLabel: 'Kişiler yükleniyor...',
+            ),
           );
         },
-        itemCount: (response["data"]).length,
       ),
     );
   }
