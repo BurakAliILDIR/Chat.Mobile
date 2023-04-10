@@ -14,7 +14,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController UsernameOrMailController = TextEditingController();
+  TextEditingController usernameOrMailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
   @override
@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
             Container(
               padding: const EdgeInsets.all(10),
               child: TextField(
-                controller: UsernameOrMailController,
+                controller: usernameOrMailController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   labelText: 'Kullanıcı Adı veya E-mail',
@@ -69,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
                   var loginViewModel = LoginViewModel();
 
                   loginViewModel.UsernameOrEmail =
-                      UsernameOrMailController.text;
+                      usernameOrMailController.text;
                   loginViewModel.Password = passwordController.text;
 
                   final status = await LoginService.Login(loginViewModel);

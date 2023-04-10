@@ -5,4 +5,5 @@ class Endpoints {
   static const ForgotPassword = "/api/ForgotPassword";
   static const Register = "/api/Register";
   static const Users = "/api/Users";
+  static const Meets = "/api/Meets/Get";
 }
