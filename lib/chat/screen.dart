@@ -5,12 +5,7 @@ import 'package:projects/helper/auth_helper.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage(
-      {Key? key,
-      required this.userName,
-      required this.email,
-      required this.phoneNumber})
-      : super(key: key);
+  const ChatPage({Key? key, required this.userName, required this.email, required this.phoneNumber}) : super(key: key);
 
   final String userName;
   final String email;
@@ -25,6 +20,8 @@ class _ChatPageState extends State<ChatPage> {
 
   late HubConnection _hubConnection;
 
+  final List<Widget> widgets = [];
+
   TextEditingController messageController = TextEditingController();
 
   @override
@@ -35,11 +32,8 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> initSignalR() async {
     _hubConnection = HubConnectionBuilder()
-        .withUrl(serverUrl,
-            options: HttpConnectionOptions(
-                accessTokenFactory: () => AuthHelper.GetAccessToken()))
-        .withAutomaticReconnect(
-            retryDelays: [2000, 5000, 10000, 20000]).build();
+        .withUrl(serverUrl, options: HttpConnectionOptions(accessTokenFactory: () => AuthHelper.GetAccessToken()))
+        .withAutomaticReconnect(retryDelays: [2000, 5000, 10000, 20000]).build();
 
     await _hubConnection.start();
     print(_hubConnection.state);
@@ -49,7 +43,11 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     _hubConnection.on("ReceiveMessage", (arguments) {
-      for (var arg in arguments!) print(arg);
+      for (var arg in arguments!) {
+        setState(() {
+          widgets.add(Text(arg.toString(), textAlign: TextAlign.left));
+        });
+      }
     });
   }
 
@@ -66,82 +64,84 @@ class _ChatPageState extends State<ChatPage> {
         title: Text(widget.userName),
       ),
       body: Scrollbar(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FutureBuilder<GetMessagesResponse>(
-              future: ChatService.GetMessages(widget.userName),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  List<Widget> widgets = [];
-                  for (Data data in (snapshot.data?.data as List<Data>)) {
-                    if (data.receiverId == widget.userName) {
-                      widgets.add(Text(
-                        data.text.toString(),
-                        textAlign: TextAlign.right,
-                      ));
-                    } else {
-                      widgets.add(Text(
-                        data.text.toString(),
-                        textAlign: TextAlign.left,
-                      ));
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FutureBuilder<GetMessagesResponse>(
+                future: ChatService.GetMessages(widget.userName),
+                builder: (context, snapshot) {
+
+                  if (snapshot.hasData) {
+                    for (Data data in (snapshot.data?.data as List<Data>)) {
+                      if (data.receiverId == widget.userName) {
+                        widgets.add(Text(
+                          data.text.toString(),
+                          textAlign: TextAlign.right,
+                        ));
+                      } else {
+                        widgets.add(Text(
+                          data.text.toString(),
+                          textAlign: TextAlign.left,
+                        ));
+                      }
                     }
+                    return ListView(
+                      shrinkWrap: true,
+                      reverse: false,
+                      children: widgets,
+                    );
                   }
-                  return ListView(
-                    shrinkWrap: true,
-                    reverse: false,
-                    children: widgets,
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      semanticsLabel: 'Mesajlar yükleniyor...',
+                    ),
                   );
-                }
-                return const Center(
-                  child: CircularProgressIndicator(
-                    semanticsLabel: 'Mesajlar yükleniyor...',
-                  ),
-                );
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: messageController,
-                        keyboardType: TextInputType.text,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Mesaj',
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextField(
+                          controller: messageController,
+                          keyboardType: TextInputType.text,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Mesaj',
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: FloatingActionButton(
-                      child: Icon(Icons.send),
-                      onPressed: () async {
-                        if (_hubConnection.state ==
-                            HubConnectionState.Connected) {
-                          await _hubConnection.invoke(
-                            "SendMessage",
-                            args: <Object>[
-                              {
-                                "ReceiverId": widget.userName,
-                                "Text": messageController.text
-                              }
-                            ],
-                          );
-                        }
-                      },
+                    Expanded(
+                      flex: 1,
+                      child: FloatingActionButton(
+                        child: const Icon(Icons.send),
+                        onPressed: () async {
+                          if (_hubConnection.state == HubConnectionState.Connected) {
+                            await _hubConnection.invoke(
+                              "SendMessage",
+                              args: <Object>[
+                                {"ReceiverId": widget.userName, "Text": messageController.text}
+                              ],
+                            );
+                            setState(() {
+                              messageController.text = "";
+                              widgets.add(Text(messageController.text, textAlign: TextAlign.left));
+                            });
+                          }
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
